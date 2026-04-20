@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Mission Notes — FIXED</title>
+    <style>
+        body { font-family: sans-serif; max-width: 700px; margin: 2rem auto; padding: 0 1rem; }
+        .note { background: #f4f4f4; border-left: 4px solid #080; padding: .6rem 1rem; margin: .5rem 0; }
+        .ok { color: #080; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Mission Notes Board <span class="ok">[FIXED]</span></h1>
+
+    <form method="POST" action="/note">
+        <label for="note">Add a note:</label><br>
+        <textarea id="note" name="note" rows="3" cols="60"
+            placeholder="Try: &lt;script&gt;alert('XSS')&lt;/script&gt;"></textarea><br>
+        <button type="submit">Post Note</button>
+    </form>
+
+    <h2>Notes</h2>
+    {% for note in notes %}
+    <div class="note">
+        <!--
+            FIX: '| safe' removed. Jinja2 auto-escaping is ON by default for
+            .html templates. The template engine converts:
+                <  →  &lt;
+                >  →  &gt;
+                &  →  &amp;
+                "  →  &#34;
+                '  →  &#39;
+            so <script>alert(1)</script> becomes the harmless visible text
+            &lt;script&gt;alert(1)&lt;/script&gt; in the rendered HTML.
+        -->
+        {{ note }}  {# FIX: auto-escaping active — output is HTML-encoded #}
+    </div>
+    {% else %}
+    <p>No notes yet.</p>
+    {% endfor %}
+
+    {% if notes %}
+    <script>
+        <!--
+            FIX: '| tojson' produces a properly JSON-encoded string literal,
+            including surrounding double quotes. Single quotes, backslashes,
+            angle brackets, and Unicode control characters are all escaped.
+
+            Attacker input '; alert('XSS'); var x='  becomes:
+                "'; alert('XSS'); var x='"
+            The string boundary cannot be escaped — the injected characters
+            are inside a safe JSON string value, not executable code.
+        -->
+        var lastNote = {{ notes[-1] | tojson }};  {# FIX: JS-context encoding via tojson #}
+        console.log('Last note (JS context):', lastNote);
+    </script>
+    {% endif %}
+</body>
+</html>

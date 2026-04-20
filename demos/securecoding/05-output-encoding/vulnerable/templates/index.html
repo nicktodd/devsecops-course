@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Mission Notes — VULNERABLE</title>
+    <style>
+        body { font-family: sans-serif; max-width: 700px; margin: 2rem auto; padding: 0 1rem; }
+        .note { background: #f4f4f4; border-left: 4px solid #c00; padding: .6rem 1rem; margin: .5rem 0; }
+        .warning { color: #c00; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Mission Notes Board <span class="warning">[VULNERABLE]</span></h1>
+
+    <form method="POST" action="/note">
+        <label for="note">Add a note:</label><br>
+        <textarea id="note" name="note" rows="3" cols="60"
+            placeholder="Try: &lt;script&gt;alert('XSS')&lt;/script&gt;"></textarea><br>
+        <button type="submit">Post Note</button>
+    </form>
+
+    <h2>Notes</h2>
+    {% for note in notes %}
+    <div class="note">
+        <!--
+            VULNERABILITY: '| safe' disables Jinja2's automatic HTML escaping.
+            Any HTML or script tags in 'note' are injected as raw markup.
+            <script>alert(1)</script> becomes a live script tag in the page.
+        -->
+        {{ note | safe }}  {# VULNERABLE: auto-escaping bypassed #}
+    </div>
+    {% else %}
+    <p>No notes yet.</p>
+    {% endfor %}
+
+    <!--
+        VULNERABILITY: Direct string interpolation into a JavaScript context.
+        An attacker who controls 'note' can close the string literal and inject
+        arbitrary JavaScript. Example payload:
+            '; alert('XSS via JS context'); var x='
+        Results in:
+            var lastNote = ''; alert('XSS via JS context'); var x='';
+    -->
+    {% if notes %}
+    <script>
+        // VULNERABLE: note value embedded directly into JS string literal
+        var lastNote = '{{ notes[-1] }}';
+        console.log('Last note (JS context):', lastNote);
+    </script>
+    {% endif %}
+</body>
+</html>

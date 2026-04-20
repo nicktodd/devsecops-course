@@ -1,0 +1,40 @@
+"""
+Python Dependency Risks — Vulnerable Packaging
+
+This requirements.txt represents a common pattern in Python projects:
+  - Versions are unpinned, so the exact package installed varies by environment
+    and by when 'pip install' is run. A newly disclosed CVE can silently appear
+    on the next deploy.
+  - Pillow 9.0.0 contains CVE-2022-22817 (arbitrary expression evaluation via
+    ImageMath.eval) — a known vulnerable version is deliberately pinned here
+    to demonstrate what pip-audit detects.
+  - 'pyyaml' without a version pin could resolve to a version affected by
+    CVE-2017-18342 (arbitrary code execution via yaml.load).
+  - Transitive dependencies (werkzeug, jinja2, click, itsdangerous, etc.)
+    are not listed at all — their versions are uncontrolled and unaudited.
+
+No lock file, no hash verification, no CVE scanning.
+
+To demonstrate the vulnerability:
+  pip install -r requirements.txt
+  pip-audit -r requirements.txt   # or: pip install pip-audit first
+"""
+
+# VULNERABILITY: No version pins. Installed version depends on the date and
+#                available releases. Breaking changes and new CVEs arrive silently.
+flask
+requests
+
+# VULNERABILITY: Explicit CVE present. Pillow 9.0.0 is affected by
+#                CVE-2022-22817 — ImageMath.eval() evaluates arbitrary Python
+#                expressions, allowing code execution via crafted image metadata.
+Pillow==9.0.0
+
+# VULNERABILITY: pyyaml without a lower-bound pin could resolve to a version
+#                affected by CVE-2017-18342 (yaml.load RCE without Loader=).
+pyyaml
+
+# NOTE — typosquatting risk (do not install):
+# A package named 'reqeusts' (misspelled) was published to PyPI and contained
+# malicious code. Unpinned installs combined with fast typing are a real vector.
+# The legitimate package is 'requests' (correct spelling).

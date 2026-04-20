@@ -1,0 +1,15 @@
+# Source constraints — human-maintained, reviewed during PR.
+# These are the direct (top-level) dependencies only.
+# Transitive dependencies are resolved and pinned by pip-compile.
+#
+# To regenerate requirements.txt after updating this file:
+#   pip install pip-tools
+#   pip-compile --generate-hashes --output-file requirements.txt requirements.in
+#
+# To upgrade all packages to their latest compatible versions:
+#   pip-compile --generate-hashes --upgrade --output-file requirements.txt requirements.in
+
+flask>=3.0,<4.0
+requests>=2.31,<3.0
+Pillow>=10.3,<11.0
+pyyaml>=6.0,<7.0
