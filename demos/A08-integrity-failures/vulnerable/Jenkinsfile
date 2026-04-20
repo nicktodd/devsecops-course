@@ -1,0 +1,52 @@
+// OWASP A08:2021 - Software and Data Integrity Failures
+// Vulnerable Jenkinsfile: scripts and artifacts are downloaded and executed
+// without any integrity verification, enabling supply-chain attacks.
+
+pipeline {
+    agent any
+
+    environment {
+        DEPLOY_SCRIPT_URL = "http://internal-scripts.example.com/deploy.sh"
+        ARTIFACT_URL      = "http://artifacts.example.com/releases/app-1.0.jar"
+    }
+
+    stages {
+
+        stage('Fetch and Run Deploy Script') {
+            steps {
+                // VULNERABILITY: "curl | bash" — the remote script is downloaded and
+                // executed in a single pipeline, with no opportunity to inspect or
+                // verify the content before execution.
+                //
+                // If the remote server is compromised (supply-chain attack), or if the
+                // URL is intercepted (man-in-the-middle — note HTTP not HTTPS), the
+                // Jenkins agent will execute arbitrary attacker-controlled code with
+                // whatever privileges the Jenkins process runs as.
+                sh 'curl -s $DEPLOY_SCRIPT_URL | bash'
+            }
+        }
+
+        stage('Pull Build Image') {
+            steps {
+                // VULNERABILITY: Docker image pulled with the 'latest' mutable tag.
+                // The 'latest' tag can be silently updated in the registry at any time.
+                // A compromised registry push could swap in a backdoored build environment
+                // without changing the tag — the pipeline would pull it on next run with
+                // no indication that anything changed.
+                sh 'docker pull maven:latest'     // VULNERABLE: mutable tag
+                sh 'docker run maven:latest mvn clean package'
+            }
+        }
+
+        stage('Download and Run Artifact') {
+            steps {
+                // VULNERABILITY: Artifact downloaded over plain HTTP.
+                // Traffic can be intercepted and the JAR replaced in transit (MITM).
+                // No checksum is verified after download — a tampered artifact
+                // would be deployed silently.
+                sh 'wget $ARTIFACT_URL -O app.jar'    // VULNERABLE: HTTP, no checksum
+                sh 'java -jar app.jar &'
+            }
+        }
+    }
+}

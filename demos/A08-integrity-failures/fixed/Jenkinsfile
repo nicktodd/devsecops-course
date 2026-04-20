@@ -1,0 +1,89 @@
+// OWASP A08:2021 - Software and Data Integrity Failures
+// Fixed Jenkinsfile: all externally sourced scripts and artifacts are
+// downloaded over HTTPS and verified against a known-good SHA-256 checksum
+// before being used. Docker images are pinned to immutable digest hashes.
+
+pipeline {
+    agent any
+
+    environment {
+        DEPLOY_SCRIPT_URL = "https://internal-scripts.example.com/deploy.sh"
+
+        // FIX: The expected SHA-256 hash of the deployment script.
+        // Computed on a trusted machine with: sha256sum deploy.sh
+        // This value must be updated whenever the script is legitimately changed
+        // and reviewed as part of the change process.
+        DEPLOY_SCRIPT_SHA256 = "e3b0c44298fc1c149afbf4c8996fb924427ae41e4649b934ca495991b7852b855"
+
+        ARTIFACT_URL = "https://artifacts.example.com/releases/app-1.0.jar"
+
+        // FIX: Expected SHA-256 hash of the release artifact.
+        // In a mature pipeline this would be fetched from a signed manifest in
+        // the artifact repository (e.g. Nexus, Artifactory) rather than hard-coded.
+        ARTIFACT_SHA256 = "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"
+    }
+
+    stages {
+
+        stage('Fetch and Verify Deploy Script') {
+            steps {
+                // FIX: Download over HTTPS — protects against MITM interception
+                sh 'curl -fsSL $DEPLOY_SCRIPT_URL -o deploy.sh'
+
+                // FIX: Verify the checksum BEFORE executing.
+                // If the file has been tampered with (changed server, MITM, storage
+                // corruption), the hash will not match and the pipeline aborts here.
+                sh '''
+                    echo "${DEPLOY_SCRIPT_SHA256}  deploy.sh" | sha256sum --check --strict
+                '''
+
+                // FIX: Execute only after integrity is confirmed
+                sh 'bash deploy.sh'
+            }
+        }
+
+        stage('Build with Pinned Image') {
+            steps {
+                // FIX: Pin the Docker image to its immutable content-addressable digest.
+                // A digest is a SHA-256 hash of the image manifest — it cannot be
+                // reused or reassigned. The registry cannot silently swap the image.
+                // Generate with: docker inspect --format='{{index .RepoDigests 0}}' maven:3.9.6-eclipse-temurin-17
+                sh '''
+                    docker pull maven@sha256:4f16c64d86c10c2b5b5e3e2d24b5d18c36f50b41a66b3c1d39f49d7e8e6a2f3c
+                    docker run \
+                        maven@sha256:4f16c64d86c10c2b5b5e3e2d24b5d18c36f50b41a66b3c1d39f49d7e8e6a2f3c \
+                        mvn clean package
+                '''
+            }
+        }
+
+        stage('Download and Verify Artifact') {
+            steps {
+                // FIX: Download over HTTPS
+                sh 'curl -fsSL $ARTIFACT_URL -o app.jar'
+
+                // FIX: Verify SHA-256 checksum before running.
+                // Abort the pipeline if the checksum does not match — this indicates
+                // tampering, a corrupt download, or a wrong artifact version.
+                sh '''
+                    echo "${ARTIFACT_SHA256}  app.jar" | sha256sum --check --strict
+                    if [ $? -ne 0 ]; then
+                        echo "ERROR: Artifact checksum mismatch. Aborting deployment."
+                        exit 1
+                    fi
+                '''
+
+                sh 'java -jar app.jar &'
+            }
+        }
+    }
+
+    post {
+        failure {
+            // FIX: Notify the security team on any integrity failure so the incident
+            // can be investigated — a checksum mismatch may indicate active compromise.
+            echo "ALERT: Pipeline failed — possible integrity violation. Investigate immediately."
+            // In production: send to Slack, PagerDuty, or email via Jenkins plugin
+        }
+    }
+}

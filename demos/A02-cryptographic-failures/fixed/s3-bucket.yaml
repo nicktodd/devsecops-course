@@ -1,0 +1,67 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  FIXED: Private, encrypted S3 bucket with versioning and access logging.
+  Demonstrates OWASP A02:2021 - Cryptographic Failures (data protected at rest).
+
+Parameters:
+  LogBucketName:
+    Type: String
+    Description: Name of the existing S3 bucket to receive access logs.
+
+Resources:
+
+  SecureDataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+
+      # FIX: Block all forms of public access at the bucket level.
+      # Even if a bucket policy or ACL attempts to grant public access,
+      # this configuration overrides it and denies the request.
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+      # FIX: Enable AWS KMS server-side encryption for all objects at rest.
+      # Objects are encrypted before being written to disk.
+      # aws:kms uses the AWS-managed key; use a customer-managed KMS key (CMK)
+      # for additional control over key rotation and access policies.
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+              KMSMasterKeyID: alias/aws/s3
+            BucketKeyEnabled: true  # Reduces KMS API call costs
+
+      # FIX: Enable versioning so accidental deletions and overwrites are recoverable.
+      # Required for Object Lock and recommended for sensitive data buckets.
+      VersioningConfiguration:
+        Status: Enabled
+
+      # FIX: Enable server access logging to a separate dedicated log bucket.
+      # Logs record the requester, IP address, object key, and response code —
+      # essential for detecting unauthorised access or data exfiltration.
+      LoggingConfiguration:
+        DestinationBucketName: !Ref LogBucketName
+        LogFilePrefix: "secure-data-bucket-access-logs/"
+
+  # FIX: Bucket policy enforces HTTPS-only access (denies HTTP requests).
+  # Prevents credentials and data from being transmitted in cleartext.
+  SecureDataBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref SecureDataBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenyNonTLS
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource:
+              - !Sub "arn:aws:s3:::${SecureDataBucket}"
+              - !Sub "arn:aws:s3:::${SecureDataBucket}/*"
+            Condition:
+              Bool:
+                "aws:SecureTransport": "false"  # FIX: Reject any request not using TLS

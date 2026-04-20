@@ -1,0 +1,49 @@
+// OWASP A06:2021 - Vulnerable and Outdated Components
+// Vulnerable Jenkinsfile: no dependency scanning, no artifact integrity checks,
+// and the pipeline will succeed even if critical CVEs are present in dependencies.
+
+pipeline {
+    agent any
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build') {
+            steps {
+                // VULNERABILITY: The build pulls dependencies from Maven Central
+                // based on the versions declared in pom.xml.
+                // If pom.xml contains vulnerable versions, they are silently downloaded
+                // and compiled into the artifact — no warning is produced.
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                // VULNERABILITY: Unit tests run against the vulnerable dependency versions.
+                // Tests pass because CVEs are runtime/network-level vulnerabilities,
+                // not compile-time or unit-test-detectable bugs.
+                sh 'mvn test'
+            }
+        }
+
+        // VULNERABILITY: No dependency vulnerability scanning stage exists.
+        // The pipeline has no OWASP Dependency-Check, Snyk, or similar SCA step.
+        // A critical CVE (e.g. Log4Shell) will pass straight through to production.
+
+        stage('Deploy') {
+            steps {
+                // VULNERABILITY: The artifact is deployed with no checksum verification.
+                // If the artifact store is compromised or a dependency was swapped
+                // during the build, the tampered artifact is deployed without detection.
+                sh 'cp target/*.jar /opt/app/app.jar'
+                sh 'systemctl restart app'
+            }
+        }
+    }
+}

@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  VULNERABLE: Wildcard IAM policy ("God mode") and a security group open
+  to the entire internet on all ports.
+  Demonstrates OWASP A05:2021 - Security Misconfiguration.
+
+Resources:
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # VULNERABLE IAM ROLE
+  # The policy grants every AWS action on every resource.
+  # Any principal that assumes this role has full control of the AWS account.
+  # ──────────────────────────────────────────────────────────────────────────
+  InsecureAppRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: InsecureAppRole-Demo
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: WildcardEverything
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: GodMode
+                Effect: Allow
+                Action: "*"       # VULNERABILITY: Every AWS action (S3, IAM, EC2, RDS, ...)
+                Resource: "*"     # VULNERABILITY: On every resource in the account
+                # Impact: A compromised EC2 instance with this role can:
+                #   - Read/delete all S3 buckets
+                #   - Create new IAM users with admin privileges
+                #   - Spin up expensive resources (crypto-mining)
+                #   - Exfiltrate all RDS databases
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # VULNERABLE SECURITY GROUP
+  # Accepts all inbound traffic from the entire internet on all ports.
+  # ──────────────────────────────────────────────────────────────────────────
+  InsecureSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "VULNERABLE: Open to the world on all ports"
+      SecurityGroupIngress:
+        - IpProtocol: "-1"      # VULNERABILITY: All protocols (TCP, UDP, ICMP, ...)
+          FromPort: 0
+          ToPort: 65535
+          CidrIp: "0.0.0.0/0"  # VULNERABILITY: Entire IPv4 internet
+        - IpProtocol: "-1"
+          FromPort: 0
+          ToPort: 65535
+          CidrIpv6: "::/0"     # VULNERABILITY: Entire IPv6 internet
+      # Impact: Exposes SSH (22), RDP (3389), databases (3306, 5432),
+      #         and any other listening service directly to the internet.

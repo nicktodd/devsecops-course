@@ -1,0 +1,91 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  FIXED: Least-privilege IAM role and restrictive security group.
+  Demonstrates OWASP A05:2021 - Security Misconfiguration (remediated).
+
+Parameters:
+  AllowedIngressCidr:
+    Type: String
+    Description: >
+      CIDR block permitted to reach the application on HTTPS (port 443).
+      Use your organisation's egress IP range, not 0.0.0.0/0.
+    Default: "10.0.0.0/16"
+
+  AppBucketArn:
+    Type: String
+    Description: ARN of the S3 bucket this application needs to read/write.
+    Default: "arn:aws:s3:::my-app-bucket"
+
+  AppSecretArn:
+    Type: String
+    Description: >
+      ARN of the Secrets Manager secret holding the application's database credentials.
+    Default: "arn:aws:secretsmanager:us-east-1:123456789012:secret:my-app-db-creds"
+
+Resources:
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # FIXED IAM ROLE — Principle of Least Privilege
+  # The role grants only the specific actions this application actually needs,
+  # on only the specific resources it is authorised to access.
+  # ──────────────────────────────────────────────────────────────────────────
+  SecureAppRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: SecureAppRole-Demo
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: LeastPrivilegePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+
+              # FIX: Only the S3 actions this app uses, on its specific bucket only
+              - Sid: AllowAppS3Access
+                Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource: !Sub "${AppBucketArn}/*"
+
+              # FIX: Allow listing the bucket (needed for some SDK calls), bucket only
+              - Sid: AllowS3ListBucket
+                Effect: Allow
+                Action: s3:ListBucket
+                Resource: !Ref AppBucketArn
+
+              # FIX: Allow reading a single named secret for database credentials
+              - Sid: AllowSecretsManagerRead
+                Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource: !Ref AppSecretArn
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # FIXED SECURITY GROUP — Minimum required inbound access only
+  # ──────────────────────────────────────────────────────────────────────────
+  SecureSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "FIXED: HTTPS only from a known CIDR range"
+      SecurityGroupIngress:
+        # FIX: Only port 443 (HTTPS), from a defined network range.
+        # Replace AllowedIngressCidr with your organisation's egress IP range.
+        # All other ports (SSH, RDP, databases) are not reachable from outside.
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !Ref AllowedIngressCidr
+
+      # FIX: Explicitly restrict outbound traffic if the application only needs
+      # to call specific external endpoints (e.g., an external API on 443).
+      # The default "allow all outbound" is left here; tighten as needed.
+      Tags:
+        - Key: Purpose
+          Value: "Demo - SecureAppSecurityGroup"

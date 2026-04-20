@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  VULNERABLE: S3 bucket with public read access, no server-side encryption,
+  no versioning, and no access logging.
+  Demonstrates OWASP A02:2021 - Cryptographic Failures (data exposed at rest).
+
+Resources:
+
+  InsecureDataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      # VULNERABILITY: PublicRead makes every object readable by anyone on the internet.
+      # Sensitive data (PII, credentials, financial records) is fully exposed.
+      AccessControl: PublicRead
+
+      # VULNERABILITY: No BucketEncryption block is present.
+      # Data is stored in plaintext. If AWS storage media is ever accessed outside
+      # normal channels, or if an IAM misconfiguration grants unexpected access,
+      # all data is readable without any key material.
+      # BucketEncryption: (intentionally omitted to demonstrate the vulnerability)
+
+      # VULNERABILITY: No PublicAccessBlockConfiguration.
+      # AWS account-level public access blocks could still protect this bucket,
+      # but relying on account-level controls alone is fragile.
+      # PublicAccessBlockConfiguration: (intentionally omitted)
+
+      # VULNERABILITY: No VersioningConfiguration.
+      # Accidental deletion or ransomware cannot be recovered from.
+      # VersioningConfiguration: (intentionally omitted)
+
+      # VULNERABILITY: No LoggingConfiguration.
+      # There is no audit trail of which IP addresses accessed which objects,
+      # making data exfiltration undetectable.
+      # LoggingConfiguration: (intentionally omitted)
+
+  # VULNERABILITY: Bucket policy explicitly grants public GetObject to everyone (*)
+  InsecureDataBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref InsecureDataBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: PublicReadAll
+            Effect: Allow
+            Principal: "*"          # VULNERABLE: Any unauthenticated principal
+            Action: "s3:GetObject"
+            Resource: !Sub "arn:aws:s3:::${InsecureDataBucket}/*"

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  OWASP A06:2021 - Vulnerable and Outdated Components
+  Fix: All dependencies updated to patched versions.
+  OWASP Dependency-Check plugin added — the build FAILS if any
+  dependency has a CVSS score >= 7.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.example</groupId>
+  <artifactId>secure-app</artifactId>
+  <version>1.0.0</version>
+
+  <dependencies>
+
+    <!-- FIX: Log4j updated to 2.17.1 which removes the JNDI lookup feature entirely.
+         CVE-2021-44228 (Log4Shell) is patched. -->
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+      <version>2.17.1</version>
+    </dependency>
+
+    <!-- FIX: Spring updated to 5.3.20 which patches CVE-2022-22965 (Spring4Shell). -->
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-webmvc</artifactId>
+      <version>5.3.20</version>
+    </dependency>
+
+    <!-- FIX: Jackson Databind updated to 2.13.4 which patches all known
+         deserialization CVEs including CVE-2019-14540. -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.13.4</version>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <plugins>
+
+      <!--
+        FIX: OWASP Dependency-Check Maven plugin.
+        Scans all project dependencies against the NVD CVE database.
+        The build FAILS if any dependency has a CVSS score >= 7 (High or Critical).
+        Run manually with: mvn dependency-check:check
+        The HTML report is written to target/dependency-check-report.html
+      -->
+      <plugin>
+        <groupId>org.owasp</groupId>
+        <artifactId>dependency-check-maven</artifactId>
+        <version>8.4.3</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <!-- FIX: Fail the build on any High or Critical CVE (CVSS >= 7) -->
+          <failBuildOnCVSS>7</failBuildOnCVSS>
+          <!-- FIX: Generate both HTML and JSON reports for CI consumption -->
+          <format>ALL</format>
+        </configuration>
+      </plugin>
+
+    </plugins>
+  </build>
+
+</project>

