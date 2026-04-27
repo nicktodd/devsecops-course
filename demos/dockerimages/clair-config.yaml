@@ -1,0 +1,27 @@
+# Clair v4 configuration for local demo scanning
+# Reference: https://quay.github.io/clair/reference/config.md
+
+http_listen_addr: :6060
+introspection_addr: :8089
+log_level: info
+
+# Indexer service - responsible for fetching and indexing image layers
+indexer:
+  connstring: host=clair-db port=5432 user=clair dbname=clair sslmode=disable password=clairpassword
+  scanlock_retry: 10
+  layer_scan_concurrency: 5
+  migrations: true
+
+# Matcher service - matches indexed packages against vulnerability DBs
+matcher:
+  connstring: host=clair-db port=5432 user=clair dbname=clair sslmode=disable password=clairpassword
+  max_conn_pool: 100
+  migrations: true
+  indexer_addr: http://clair:6060
+
+# Notifier service - handles vulnerability change notifications
+notifier:
+  connstring: host=clair-db port=5432 user=clair dbname=clair sslmode=disable password=clairpassword
+  delivery_interval: 1m
+  poll_interval: 5m
+  migrations: true

@@ -1,0 +1,45 @@
+version: "3.8"
+
+# Docker Compose file to run a local Clair v4 scanning stack.
+# Services:
+#   registry  - local Docker registry so Clair can pull the image manifest
+#   clair-db  - PostgreSQL database used by Clair for state and vuln data
+#   clair     - Clair v4 running in "combo" mode (indexer + matcher + notifier)
+
+services:
+
+  registry:
+    image: registry:2
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+
+  clair-db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: clair
+      POSTGRES_PASSWORD: clairpassword
+      POSTGRES_DB: clair
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clair"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  clair:
+    image: quay.io/projectquay/clair:4.7.3
+    ports:
+      - "6060:6060"   # HTTP API
+      - "8089:8089"   # Introspection / health
+    environment:
+      CLAIR_CONF: /etc/clair/config.yaml
+      CLAIR_MODE: combo
+    volumes:
+      - ./clair-config.yaml:/etc/clair/config.yaml:ro
+    depends_on:
+      clair-db:
+        condition: service_healthy
+    restart: unless-stopped

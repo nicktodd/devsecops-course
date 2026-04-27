@@ -1,0 +1,124 @@
+# =============================================================================
+# Bitbucket Pipeline - Build Docker image and scan with Clair v4
+#
+# This pipeline has two steps:
+#   1. build    - builds the image, saves it as an artifact
+#   2. clair-scan - loads the image, starts a local Clair stack inside the
+#                   step's Docker-in-Docker environment, then scans
+#
+# Required Bitbucket repository variables (Settings > Repository variables):
+#   (none required for the default local scan; add registry creds if pushing)
+#
+# The pipeline uses Docker-in-Docker via the built-in "docker" service.
+# Ensure Pipelines has at least 4 GB of memory allocated for the scan step.
+# =============================================================================
+
+image: docker:25
+
+pipelines:
+  default:
+
+    # -------------------------------------------------------------------------
+    # Step 1: Build the Docker image and save it as a pipeline artifact
+    # -------------------------------------------------------------------------
+    - step:
+        name: Build Docker Image
+        services:
+          - docker
+        script:
+          - cd demos/dockerimages
+          - docker build -t vulnerable-app:${BITBUCKET_COMMIT} .
+          - docker save vulnerable-app:${BITBUCKET_COMMIT} -o /tmp/image.tar
+          - cp /tmp/image.tar image.tar
+        artifacts:
+          - demos/dockerimages/image.tar
+
+    # -------------------------------------------------------------------------
+    # Step 2: Scan the built image with Clair v4
+    # -------------------------------------------------------------------------
+    - step:
+        name: Clair Vulnerability Scan
+        services:
+          - docker
+        # Increase memory so Clair and Postgres can run alongside the step
+        size: 2x
+        script:
+          - cd demos/dockerimages
+
+          # -- Load the image saved in Step 1 --
+          - docker load -i image.tar
+
+          # -- Create an isolated network for the Clair stack --
+          - docker network create clair-net
+
+          # -- Start PostgreSQL for Clair --
+          - |
+            docker run -d \
+              --name clair-db \
+              --network clair-net \
+              -e POSTGRES_USER=clair \
+              -e POSTGRES_PASSWORD=clairpassword \
+              -e POSTGRES_DB=clair \
+              postgres:15
+
+          # -- Wait for Postgres to accept connections --
+          - |
+            echo "Waiting for PostgreSQL..."
+            until docker exec clair-db pg_isready -U clair > /dev/null 2>&1; do
+              sleep 3
+            done
+            echo "PostgreSQL ready."
+
+          # -- Start a local image registry --
+          - |
+            docker run -d \
+              --name registry \
+              --network clair-net \
+              -p 5000:5000 \
+              registry:2
+
+          # -- Upload the clair config and start Clair v4 --
+          - |
+            docker run -d \
+              --name clair \
+              --network clair-net \
+              -p 6060:6060 \
+              -p 8089:8089 \
+              -e CLAIR_CONF=/etc/clair/config.yaml \
+              -e CLAIR_MODE=combo \
+              -v "$(pwd)/clair-config.yaml:/etc/clair/config.yaml:ro" \
+              quay.io/projectquay/clair:4.7.3
+
+          # -- Wait for Clair API to be healthy --
+          - |
+            echo "Waiting for Clair..."
+            until wget -qO- http://localhost:6060/healthz > /dev/null 2>&1; do
+              sleep 5
+            done
+            echo "Clair ready."
+
+          # -- Tag and push image to the local registry --
+          - docker tag vulnerable-app:${BITBUCKET_COMMIT} localhost:5000/vulnerable-app:${BITBUCKET_COMMIT}
+          - docker push localhost:5000/vulnerable-app:${BITBUCKET_COMMIT}
+
+          # -- Download clairctl --
+          - |
+            wget -qO clairctl \
+              https://github.com/quay/clair/releases/download/v4.7.3/clairctl-linux-amd64
+            chmod +x clairctl
+
+          # -- Run the vulnerability report --
+          # Remove "|| true" if you want the pipeline to FAIL when CVEs are found
+          - ./clairctl --host http://localhost:6060 report \
+              localhost:5000/vulnerable-app:${BITBUCKET_COMMIT} | tee clair-report.json || true
+
+        artifacts:
+          - demos/dockerimages/clair-report.json
+
+# =============================================================================
+# Service definitions
+# =============================================================================
+definitions:
+  services:
+    docker:
+      memory: 4096
