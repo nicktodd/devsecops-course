@@ -1,0 +1,109 @@
+version: 0.2
+# ─────────────────────────────────────────────────────────────────────────────
+# ESA Mission Registry - CodeBuild Buildspec
+#
+# Phases:
+#   install   - install SAM CLI, Python deps, security tooling
+#   pre_build - run unit tests and SAST/dependency scanning
+#   build     - SAM build + package
+#   post_build - SAM deploy (on main branch only)
+# ─────────────────────────────────────────────────────────────────────────────
+
+env:
+  variables:
+    STACK_NAME: "esa-mission-registry"
+    SAM_TEMPLATE: "template.yaml"
+    PYTHON_VERSION: "3.11"
+  parameter-store:
+    DEPLOY_BUCKET: "/esa-mission-registry/deploy-bucket"
+    DEPLOY_REGION: "/esa-mission-registry/deploy-region"
+    DEPLOY_ENV:    "/esa-mission-registry/deploy-env"
+
+phases:
+  install:
+    runtime-versions:
+      python: "3.11"
+    commands:
+      - echo "=== Installing dependencies ==="
+      - pip install --upgrade pip
+      # SAM CLI
+      - pip install aws-sam-cli
+      # Testing
+      - pip install pytest pytest-cov
+      # Security scanning tools
+      - pip install bandit safety pip-audit
+      # Application dependencies
+      - pip install -r demos/stride/app/requirements.txt
+
+  pre_build:
+    commands:
+      - echo "=== Running unit tests ==="
+      - cd demos/stride
+      - python -m pytest tests/ -v --cov=app/src --cov-report=xml --cov-report=term
+          --junitxml=reports/test-results.xml || (echo "Tests failed" && exit 1)
+
+      - echo "=== SAST - Bandit security scan (STRIDE: Tampering/Info Disclosure) ==="
+      - bandit -r app/src/ -f json -o reports/bandit-report.json -ll || true
+      - bandit -r app/src/ -ll   # Print summary to build log
+
+      - echo "=== Dependency vulnerability scan (STRIDE: Tampering) ==="
+      - pip-audit -r app/requirements.txt --format json -o reports/pip-audit-report.json || true
+      - pip-audit -r app/requirements.txt   # Print summary to build log
+
+      - echo "=== SAM template validation ==="
+      - sam validate --template template.yaml --lint
+
+      - cd ../..
+
+  build:
+    commands:
+      - echo "=== SAM Build ==="
+      - cd demos/stride
+      - sam build --template ${SAM_TEMPLATE} --use-container
+
+      - echo "=== SAM Package ==="
+      - sam package
+          --output-template-file packaged-template.yaml
+          --s3-bucket ${DEPLOY_BUCKET}
+          --s3-prefix ${STACK_NAME}/${CODEBUILD_RESOLVED_SOURCE_VERSION}
+          --region ${DEPLOY_REGION}
+
+      - cd ../..
+
+  post_build:
+    commands:
+      - echo "=== Deploy (main branch only) ==="
+      - |
+        if [ "${CODEBUILD_WEBHOOK_TRIGGER}" = "branch/main" ] || [ "${DEPLOY_BRANCH}" = "main" ]; then
+          cd demos/stride
+          sam deploy \
+            --template-file packaged-template.yaml \
+            --stack-name ${STACK_NAME}-${DEPLOY_ENV} \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --region ${DEPLOY_REGION} \
+            --parameter-overrides Environment=${DEPLOY_ENV} \
+            --no-fail-on-empty-changeset
+          cd ../..
+        else
+          echo "Not on main branch - skipping deploy (branch: ${CODEBUILD_WEBHOOK_TRIGGER})"
+        fi
+
+reports:
+  TestResults:
+    files:
+      - "demos/stride/reports/test-results.xml"
+    file-format: JUNITXML
+  CoverageReport:
+    files:
+      - "demos/stride/reports/coverage.xml"
+    file-format: COBERTURAXML
+
+artifacts:
+  files:
+    - demos/stride/packaged-template.yaml
+    - demos/stride/reports/**/*
+  discard-paths: no
+
+cache:
+  paths:
+    - "/root/.cache/pip/**/*"

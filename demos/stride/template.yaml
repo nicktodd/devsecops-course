@@ -1,0 +1,392 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  ESA Mission Registry API - STRIDE Threat Modelling Demo
+  A serverless REST API for tracking European Space Agency missions,
+  satellites and launches. Protected with Cognito authentication.
+
+Globals:
+  Function:
+    Runtime: python3.11
+    Timeout: 30
+    MemorySize: 256
+    Environment:
+      Variables:
+        LOG_LEVEL: INFO
+        MISSIONS_TABLE: !Ref MissionsTable
+        SATELLITES_TABLE: !Ref SatellitesTable
+        LAUNCHES_TABLE: !Ref LaunchesTable
+    Tracing: Active   # X-Ray tracing for non-repudiation (STRIDE: Repudiation)
+  Api:
+    TracingEnabled: true
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Parameters
+# ─────────────────────────────────────────────────────────────────────────────
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, staging, prod]
+
+  CognitoUserPoolName:
+    Type: String
+    Default: esa-mission-registry-users
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Resources
+# ─────────────────────────────────────────────────────────────────────────────
+Resources:
+
+  # ── Cognito User Pool (STRIDE: Spoofing mitigation) ────────────────────────
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub "${CognitoUserPoolName}-${Environment}"
+      # Require email verification to prevent spoofing
+      AutoVerifiedAttributes:
+        - email
+      UsernameAttributes:
+        - email
+      # Strong password policy (STRIDE: Spoofing)
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 12
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          TemporaryPasswordValidityDays: 1
+      # MFA optional but recommended for prod
+      MfaConfiguration: OPTIONAL
+      SoftwareTokenMfaConfiguration:
+        Enabled: true
+      # Token validity (short-lived tokens reduce window for token theft)
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: false
+      Schema:
+        - Name: email
+          Required: true
+          Mutable: false
+        - Name: role
+          AttributeDataType: String
+          Mutable: true
+      # Advanced security (anomaly detection - STRIDE: Spoofing/EoP)
+      UserPoolAddOns:
+        AdvancedSecurityMode: ENFORCED
+      # Logging for non-repudiation (STRIDE: Repudiation)
+      UserPoolTags:
+        Environment: !Ref Environment
+        Project: ESA-Mission-Registry
+
+  # Cognito User Pool Client
+  CognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Sub "esa-mission-registry-client-${Environment}"
+      UserPoolId: !Ref CognitoUserPool
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      # Short token lifetimes (STRIDE: Spoofing / EoP)
+      AccessTokenValidity: 1      # 1 hour
+      IdTokenValidity: 1          # 1 hour
+      RefreshTokenValidity: 7     # 7 days
+      TokenValidityUnits:
+        AccessToken: hours
+        IdToken: hours
+        RefreshToken: days
+      PreventUserExistenceErrors: ENABLED   # Don't leak whether email exists
+
+  # Cognito User Groups (STRIDE: Elevation of Privilege mitigation)
+  AdminGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: admin
+      UserPoolId: !Ref CognitoUserPool
+      Description: Full read/write access to all mission data
+      Precedence: 1
+
+  AnalystGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: analyst
+      UserPoolId: !Ref CognitoUserPool
+      Description: Read-only access to mission data
+      Precedence: 2
+
+  # ── API Gateway ─────────────────────────────────────────────────────────────
+  MissionRegistryApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub "esa-mission-registry-${Environment}"
+      StageName: !Ref Environment
+      # Cognito authorizer (STRIDE: Spoofing mitigation)
+      Auth:
+        DefaultAuthorizer: CognitoAuthorizer
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolArn: !GetAtt CognitoUserPool.Arn
+            Identity:
+              Header: Authorization
+        AddDefaultAuthorizerToCorsPreflight: false
+      # HTTPS only - enforced by API Gateway (STRIDE: Tampering / Info Disclosure)
+      EndpointConfiguration:
+        Type: REGIONAL
+      # Throttling (STRIDE: Denial of Service mitigation)
+      MethodSettings:
+        - ResourcePath: "/*"
+          HttpMethod: "*"
+          ThrottlingBurstLimit: 50
+          ThrottlingRateLimit: 20
+          LoggingLevel: INFO
+          DataTraceEnabled: false   # Don't log request body (STRIDE: Info Disclosure)
+          MetricsEnabled: true
+      # Access logging (STRIDE: Repudiation mitigation)
+      AccessLogSetting:
+        DestinationArn: !GetAtt ApiAccessLogGroup.Arn
+        Format: >-
+          {"requestId":"$context.requestId",
+           "ip":"$context.identity.sourceIp",
+           "caller":"$context.identity.caller",
+           "user":"$context.identity.user",
+           "requestTime":"$context.requestTime",
+           "httpMethod":"$context.httpMethod",
+           "resourcePath":"$context.resourcePath",
+           "status":"$context.status",
+           "responseLength":"$context.responseLength",
+           "userAgent":"$context.identity.userAgent"}
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization'"
+        AllowOrigin: "'*'"
+
+  # ── CloudWatch Log Groups ───────────────────────────────────────────────────
+  ApiAccessLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/apigateway/esa-mission-registry-${Environment}"
+      RetentionInDays: 90   # Retain logs for audit (STRIDE: Repudiation)
+
+  MissionsLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/esa-missions-${Environment}"
+      RetentionInDays: 90
+
+  SatellitesLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/esa-satellites-${Environment}"
+      RetentionInDays: 90
+
+  LaunchesLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/esa-launches-${Environment}"
+      RetentionInDays: 90
+
+  # ── DynamoDB Tables ─────────────────────────────────────────────────────────
+  MissionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "esa-missions-${Environment}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: missionId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: missionId
+          KeyType: HASH
+      # Encryption at rest (STRIDE: Information Disclosure mitigation)
+      SSESpecification:
+        SSEEnabled: true
+      # Point-in-time recovery (tampering mitigation / audit)
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  SatellitesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "esa-satellites-${Environment}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: satelliteId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: satelliteId
+          KeyType: HASH
+      SSESpecification:
+        SSEEnabled: true
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  LaunchesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "esa-launches-${Environment}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: launchId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: launchId
+          KeyType: HASH
+      SSESpecification:
+        SSEEnabled: true
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  # ── IAM Role for Lambda (Least Privilege - STRIDE: EoP mitigation) ──────────
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "esa-lambda-role-${Environment}"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess
+      Policies:
+        - PolicyName: DynamoDBLeastPrivilege
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource:
+                  - !GetAtt MissionsTable.Arn
+                  - !GetAtt SatellitesTable.Arn
+                  - !GetAtt LaunchesTable.Arn
+
+  # ── Lambda Functions ─────────────────────────────────────────────────────────
+
+  # Missions
+  MissionsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "esa-missions-${Environment}"
+      CodeUri: app/
+      Handler: src/missions.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      LoggingConfig:
+        LogGroup: !Ref MissionsLogGroup
+      Events:
+        ListMissions:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MissionRegistryApi
+            Path: /missions
+            Method: GET
+        GetMission:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MissionRegistryApi
+            Path: /missions/{missionId}
+            Method: GET
+        CreateMission:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MissionRegistryApi
+            Path: /missions
+            Method: POST
+        UpdateMission:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MissionRegistryApi
+            Path: /missions/{missionId}
+            Method: PUT
+        DeleteMission:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MissionRegistryApi
+            Path: /missions/{missionId}
+            Method: DELETE
+
+  # Satellites
+  SatellitesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "esa-satellites-${Environment}"
+      CodeUri: app/
+      Handler: src/satellites.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      LoggingConfig:
+        LogGroup: !Ref SatellitesLogGroup
+      Events:
+        ListSatellites:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MissionRegistryApi
+            Path: /satellites
+            Method: GET
+        GetSatellite:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MissionRegistryApi
+            Path: /satellites/{satelliteId}
+            Method: GET
+        CreateSatellite:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MissionRegistryApi
+            Path: /satellites
+            Method: POST
+
+  # Launches
+  LaunchesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "esa-launches-${Environment}"
+      CodeUri: app/
+      Handler: src/launches.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      LoggingConfig:
+        LogGroup: !Ref LaunchesLogGroup
+      Events:
+        ListLaunches:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MissionRegistryApi
+            Path: /launches
+            Method: GET
+        GetLaunch:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MissionRegistryApi
+            Path: /launches/{launchId}
+            Method: GET
+        CreateLaunch:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MissionRegistryApi
+            Path: /launches
+            Method: POST
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Outputs
+# ─────────────────────────────────────────────────────────────────────────────
+Outputs:
+  ApiEndpoint:
+    Description: API Gateway endpoint URL
+    Value: !Sub "https://${MissionRegistryApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}"
+
+  UserPoolId:
+    Description: Cognito User Pool ID
+    Value: !Ref CognitoUserPool
+
+  UserPoolClientId:
+    Description: Cognito User Pool Client ID
+    Value: !Ref CognitoUserPoolClient

@@ -1,0 +1,252 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  ESA Mission Registry - CodeBuild CI/CD Pipeline
+  Provisions a CodeBuild project, supporting IAM role, S3 artefact bucket,
+  and SSM parameters used by the buildspec.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Parameters
+# ─────────────────────────────────────────────────────────────────────────────
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, staging, prod]
+
+  GitHubOwner:
+    Type: String
+    Description: GitHub organisation or username that owns the source repo
+
+  GitHubRepo:
+    Type: String
+    Default: devsecops-course
+    Description: GitHub repository name
+
+  GitHubBranch:
+    Type: String
+    Default: main
+    Description: Branch to build and deploy
+
+  GitHubConnectionArn:
+    Type: String
+    Description: >
+      ARN of the AWS CodeStar Connection to GitHub.
+      Create one in the CodePipeline console under "Connections".
+
+  DeployRegion:
+    Type: String
+    Default: eu-west-1
+    Description: AWS region to deploy the SAM stack into
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Resources
+# ─────────────────────────────────────────────────────────────────────────────
+Resources:
+
+  # ── S3 Artefact Bucket ──────────────────────────────────────────────────────
+  ArtifactBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "esa-mission-registry-artifacts-${AWS::AccountId}-${Environment}"
+      # Encryption at rest (STRIDE: Information Disclosure)
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      # Block all public access (STRIDE: Information Disclosure)
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpireOldArtifacts
+            Status: Enabled
+            ExpirationInDays: 90
+
+  ArtifactBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ArtifactBucket
+      PolicyDocument:
+        Statement:
+          # Deny non-HTTPS access (STRIDE: Tampering)
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource:
+              - !GetAtt ArtifactBucket.Arn
+              - !Sub "${ArtifactBucket.Arn}/*"
+            Condition:
+              Bool:
+                "aws:SecureTransport": false
+
+  # ── SSM Parameters (referenced in buildspec env.parameter-store) ────────────
+  SsmDeployBucket:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /esa-mission-registry/deploy-bucket
+      Type: String
+      Value: !Ref ArtifactBucket
+
+  SsmDeployRegion:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /esa-mission-registry/deploy-region
+      Type: String
+      Value: !Ref DeployRegion
+
+  SsmDeployEnv:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /esa-mission-registry/deploy-env
+      Type: String
+      Value: !Ref Environment
+
+  # ── IAM Role for CodeBuild ──────────────────────────────────────────────────
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "esa-codebuild-role-${Environment}"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: CodeBuildPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              # Logs
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/esa-*"
+              # S3 artefacts
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:GetObjectVersion
+                Resource:
+                  - !GetAtt ArtifactBucket.Arn
+                  - !Sub "${ArtifactBucket.Arn}/*"
+              # SSM parameters (buildspec reads these)
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                  - ssm:GetParameters
+                Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/esa-mission-registry/*"
+              # SAM deploy needs CloudFormation + IAM passrole
+              - Effect: Allow
+                Action:
+                  - cloudformation:*
+                Resource: !Sub "arn:aws:cloudformation:${DeployRegion}:${AWS::AccountId}:stack/esa-mission-registry-*/*"
+              - Effect: Allow
+                Action:
+                  - iam:PassRole
+                Resource: !Sub "arn:aws:iam::${AWS::AccountId}:role/esa-*"
+              # Lambda, API GW, DynamoDB, Cognito needed for SAM deploy
+              - Effect: Allow
+                Action:
+                  - lambda:*
+                  - apigateway:*
+                  - dynamodb:*
+                  - cognito-idp:*
+                Resource: "*"              # CodeStar/CodeConnections (source pull)
+              # Both prefixes required - AWS renamed the service but both are valid
+              - Effect: Allow
+                Action:
+                  - codestar-connections:UseConnection
+                  - codestar-connections:GetConnection
+                  - codestar-connections:ListConnections
+                  - codeconnections:UseConnection
+                  - codeconnections:GetConnection
+                Resource: !Ref GitHubConnectionArn
+              # CodeBuild needs to be able to list connections at account level
+              - Effect: Allow
+                Action:
+                  - codestar-connections:ListConnections
+                Resource: "*"
+
+  # ── CodeBuild Log Group ─────────────────────────────────────────────────────
+  CodeBuildLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/codebuild/esa-mission-registry-${Environment}"
+      RetentionInDays: 90
+
+  # ── CodeBuild Project ───────────────────────────────────────────────────────
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub "esa-mission-registry-${Environment}"
+      Description: Build, test, scan and deploy the ESA Mission Registry API
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+
+      Source:
+        Type: GITHUB
+        Location: !Sub "https://github.com/${GitHubOwner}/${GitHubRepo}.git"
+        BuildSpec: demos/stride/buildspec.yml
+        GitCloneDepth: 1
+        Auth:
+          Type: CODECONNECTIONS
+          Resource: !Ref GitHubConnectionArn
+
+      # NOTE: Webhooks cannot be created via CloudFormation when using
+      # CodeConnections. After deploying this stack, enable the webhook
+      # manually in the CodeBuild console:
+      #   CodeBuild → Project → Edit → Source → Enable webhook
+
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:7.0   # includes Python 3.11
+        PrivilegedMode: true   # required for SAM --use-container
+        EnvironmentVariables:
+          - Name: DEPLOY_BRANCH
+            Value: !Ref GitHubBranch
+
+      Artifacts:
+        Type: S3
+        Location: !Ref ArtifactBucket
+        Name: !Sub "esa-mission-registry-${Environment}"
+        EncryptionDisabled: false
+
+      Cache:
+        Type: S3
+        Location: !Sub "${ArtifactBucket}/cache"
+
+      LogsConfig:
+        CloudWatchLogs:
+          Status: ENABLED
+          GroupName: !Ref CodeBuildLogGroup
+          StreamName: build
+
+      # Encrypt build artefacts (STRIDE: Information Disclosure)
+      EncryptionKey: alias/aws/s3
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Outputs
+# ─────────────────────────────────────────────────────────────────────────────
+Outputs:
+  CodeBuildProjectName:
+    Description: CodeBuild project name
+    Value: !Ref CodeBuildProject
+
+  ArtifactBucketName:
+    Description: S3 bucket for build artefacts
+    Value: !Ref ArtifactBucket
+
+  CodeBuildRoleArn:
+    Description: IAM role used by CodeBuild
+    Value: !GetAtt CodeBuildRole.Arn
