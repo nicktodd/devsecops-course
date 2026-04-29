@@ -1,0 +1,13 @@
+{"timestamp":"2026-04-13T09:02:11Z","level":"INFO","event":"pipeline.triggered","build_id":"build-2041","project":"esa-mission-registry","branch":"main","commit_sha":"a3f9c12","triggered_by":"github.push","actor":"n.todd@watchelm.com","source_ip":"82.33.14.201","phase":"SOURCE"}
+{"timestamp":"2026-04-13T09:02:19Z","level":"INFO","event":"pipeline.phase.start","build_id":"build-2041","phase":"INSTALL","runtime":"python3.12"}
+{"timestamp":"2026-04-13T09:02:34Z","level":"INFO","event":"pipeline.phase.complete","build_id":"build-2041","phase":"INSTALL","duration_s":15,"outcome":"success"}
+{"timestamp":"2026-04-13T09:02:34Z","level":"INFO","event":"pipeline.phase.start","build_id":"build-2041","phase":"PRE_BUILD","commands":["pip install -r tests/requirements-test.txt","pytest tests/ -v","bandit -r app/src/"]}
+{"timestamp":"2026-04-13T09:02:51Z","level":"INFO","event":"pipeline.test.result","build_id":"build-2041","phase":"PRE_BUILD","tests_run":7,"tests_passed":7,"tests_failed":0}
+{"timestamp":"2026-04-13T09:02:58Z","level":"INFO","event":"pipeline.sast.result","build_id":"build-2041","phase":"PRE_BUILD","tool":"bandit","high_severity":0,"medium_severity":0,"low_severity":2}
+{"timestamp":"2026-04-13T09:02:58Z","level":"INFO","event":"pipeline.phase.complete","build_id":"build-2041","phase":"PRE_BUILD","duration_s":24,"outcome":"success"}
+{"timestamp":"2026-04-13T09:02:58Z","level":"INFO","event":"pipeline.phase.start","build_id":"build-2041","phase":"BUILD","commands":["sam build","sam package"]}
+{"timestamp":"2026-04-13T09:03:22Z","level":"INFO","event":"pipeline.artifact.uploaded","build_id":"build-2041","phase":"BUILD","bucket":"esa-pipeline-artifacts-prod","key":"build-2041/packaged.yaml","size_bytes":18432}
+{"timestamp":"2026-04-13T09:03:22Z","level":"INFO","event":"pipeline.phase.complete","build_id":"build-2041","phase":"BUILD","duration_s":24,"outcome":"success"}
+{"timestamp":"2026-04-13T09:03:22Z","level":"INFO","event":"pipeline.phase.start","build_id":"build-2041","phase":"POST_BUILD","commands":["sam deploy"]}
+{"timestamp":"2026-04-13T09:03:58Z","level":"INFO","event":"pipeline.deploy.complete","build_id":"build-2041","phase":"POST_BUILD","stack":"esa-mission-registry","region":"eu-west-1","outcome":"success","duration_s":36}
+{"timestamp":"2026-04-13T09:04:01Z","level":"INFO","event":"pipeline.complete","build_id":"build-2041","total_duration_s":110,"outcome":"success","branch":"main","actor":"n.todd@watchelm.com"}
