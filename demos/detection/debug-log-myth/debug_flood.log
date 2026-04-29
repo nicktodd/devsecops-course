@@ -1,0 +1,280 @@
+[2026-04-14 01:47:03] DEBUG MainThread - entering handle_request
+[2026-04-14 01:47:03] DEBUG MainThread - request headers parsed
+[2026-04-14 01:47:03] DEBUG MainThread - checking content-type
+[2026-04-14 01:47:03] DEBUG MainThread - routing to auth handler
+[2026-04-14 01:47:03] DEBUG AuthHandler - begin authenticate()
+[2026-04-14 01:47:03] DEBUG AuthHandler - loading user record from db
+[2026-04-14 01:47:03] DEBUG AuthHandler - db connection pool size: 5
+[2026-04-14 01:47:03] DEBUG AuthHandler - acquired connection from pool
+[2026-04-14 01:47:03] DEBUG AuthHandler - executing query
+[2026-04-14 01:47:03] DEBUG AuthHandler - query returned 1 row
+[2026-04-14 01:47:03] DEBUG AuthHandler - comparing password hash
+[2026-04-14 01:47:03] DEBUG AuthHandler - hash mismatch
+[2026-04-14 01:47:03] DEBUG AuthHandler - authenticate() returning False
+[2026-04-14 01:47:03] DEBUG MainThread - handler returned 401
+[2026-04-14 01:47:03] DEBUG MainThread - sending response
+[2026-04-14 01:47:03] DEBUG MainThread - response sent, 47 bytes
+[2026-04-14 01:47:31] DEBUG MainThread - entering handle_request
+[2026-04-14 01:47:31] DEBUG MainThread - request headers parsed
+[2026-04-14 01:47:31] DEBUG MainThread - checking content-type
+[2026-04-14 01:47:31] DEBUG MainThread - routing to auth handler
+[2026-04-14 01:47:31] DEBUG AuthHandler - begin authenticate()
+[2026-04-14 01:47:31] DEBUG AuthHandler - loading user record from db
+[2026-04-14 01:47:31] DEBUG AuthHandler - db connection pool size: 5
+[2026-04-14 01:47:31] DEBUG AuthHandler - acquired connection from pool
+[2026-04-14 01:47:31] DEBUG AuthHandler - executing query
+[2026-04-14 01:47:31] DEBUG AuthHandler - query returned 1 row
+[2026-04-14 01:47:31] DEBUG AuthHandler - comparing password hash
+[2026-04-14 01:47:31] DEBUG AuthHandler - hash mismatch
+[2026-04-14 01:47:31] DEBUG AuthHandler - authenticate() returning False
+[2026-04-14 01:47:31] DEBUG MainThread - handler returned 401
+[2026-04-14 01:47:31] DEBUG MainThread - sending response
+[2026-04-14 01:47:31] DEBUG MainThread - response sent, 47 bytes
+[2026-04-14 01:48:04] DEBUG MainThread - entering handle_request
+[2026-04-14 01:48:04] DEBUG MainThread - request headers parsed
+[2026-04-14 01:48:04] DEBUG MainThread - checking content-type
+[2026-04-14 01:48:04] DEBUG MainThread - routing to auth handler
+[2026-04-14 01:48:04] DEBUG AuthHandler - begin authenticate()
+[2026-04-14 01:48:04] DEBUG AuthHandler - loading user record from db
+[2026-04-14 01:48:04] DEBUG AuthHandler - db connection pool size: 5
+[2026-04-14 01:48:04] DEBUG AuthHandler - acquired connection from pool
+[2026-04-14 01:48:04] DEBUG AuthHandler - executing query
+[2026-04-14 01:48:04] DEBUG AuthHandler - query returned 1 row
+[2026-04-14 01:48:04] DEBUG AuthHandler - comparing password hash
+[2026-04-14 01:48:04] DEBUG AuthHandler - hash mismatch
+[2026-04-14 01:48:04] DEBUG AuthHandler - authenticate() returning False
+[2026-04-14 01:48:04] DEBUG MainThread - handler returned 401
+[2026-04-14 01:48:04] DEBUG MainThread - sending response
+[2026-04-14 01:48:04] DEBUG MainThread - response sent, 47 bytes
+[2026-04-14 01:48:49] DEBUG MainThread - entering handle_request
+[2026-04-14 01:48:49] DEBUG MainThread - request headers parsed
+[2026-04-14 01:48:49] DEBUG MainThread - checking content-type
+[2026-04-14 01:48:49] DEBUG MainThread - routing to auth handler
+[2026-04-14 01:48:49] DEBUG AuthHandler - begin authenticate()
+[2026-04-14 01:48:49] DEBUG AuthHandler - loading user record from db
+[2026-04-14 01:48:49] DEBUG AuthHandler - db connection pool size: 5
+[2026-04-14 01:48:49] DEBUG AuthHandler - acquired connection from pool
+[2026-04-14 01:48:49] DEBUG AuthHandler - executing query
+[2026-04-14 01:48:49] DEBUG AuthHandler - query returned 1 row
+[2026-04-14 01:48:49] DEBUG AuthHandler - comparing password hash
+[2026-04-14 01:48:49] DEBUG AuthHandler - hash mismatch
+[2026-04-14 01:48:49] DEBUG AuthHandler - authenticate() returning False
+[2026-04-14 01:48:49] DEBUG MainThread - handler returned 401
+[2026-04-14 01:48:49] DEBUG MainThread - sending response
+[2026-04-14 01:48:49] DEBUG MainThread - response sent, 47 bytes
+[2026-04-14 01:49:22] DEBUG MainThread - entering handle_request
+[2026-04-14 01:49:22] DEBUG MainThread - request headers parsed
+[2026-04-14 01:49:22] DEBUG MainThread - checking content-type
+[2026-04-14 01:49:22] DEBUG MainThread - routing to auth handler
+[2026-04-14 01:49:22] DEBUG AuthHandler - begin authenticate()
+[2026-04-14 01:49:22] DEBUG AuthHandler - loading user record from db
+[2026-04-14 01:49:22] DEBUG AuthHandler - db connection pool size: 5
+[2026-04-14 01:49:22] DEBUG AuthHandler - acquired connection from pool
+[2026-04-14 01:49:22] DEBUG AuthHandler - executing query
+[2026-04-14 01:49:22] DEBUG AuthHandler - query returned 1 row
+[2026-04-14 01:49:22] DEBUG AuthHandler - comparing password hash
+[2026-04-14 01:49:22] DEBUG AuthHandler - hash mismatch
+[2026-04-14 01:49:22] DEBUG AuthHandler - authenticate() returning False
+[2026-04-14 01:49:22] DEBUG MainThread - handler returned 401
+[2026-04-14 01:49:22] DEBUG MainThread - sending response
+[2026-04-14 01:49:22] DEBUG MainThread - response sent, 47 bytes
+[2026-04-14 01:50:11] DEBUG MainThread - entering handle_request
+[2026-04-14 01:50:11] DEBUG MainThread - request headers parsed
+[2026-04-14 01:50:11] DEBUG MainThread - checking content-type
+[2026-04-14 01:50:11] DEBUG MainThread - routing to auth handler
+[2026-04-14 01:50:11] DEBUG AuthHandler - begin authenticate()
+[2026-04-14 01:50:11] DEBUG AuthHandler - loading user record from db
+[2026-04-14 01:50:11] DEBUG AuthHandler - db connection pool size: 5
+[2026-04-14 01:50:11] DEBUG AuthHandler - acquired connection from pool
+[2026-04-14 01:50:11] DEBUG AuthHandler - executing query
+[2026-04-14 01:50:11] DEBUG AuthHandler - query returned 1 row
+[2026-04-14 01:50:11] DEBUG AuthHandler - comparing password hash
+[2026-04-14 01:50:11] DEBUG AuthHandler - hash mismatch
+[2026-04-14 01:50:11] DEBUG AuthHandler - authenticate() returning False
+[2026-04-14 01:50:11] DEBUG MainThread - handler returned 401
+[2026-04-14 01:50:11] DEBUG MainThread - sending response
+[2026-04-14 01:50:11] DEBUG MainThread - response sent, 47 bytes
+[2026-04-14 01:51:03] DEBUG MainThread - entering handle_request
+[2026-04-14 01:51:03] DEBUG MainThread - request headers parsed
+[2026-04-14 01:51:03] DEBUG MainThread - checking content-type
+[2026-04-14 01:51:03] DEBUG MainThread - routing to auth handler
+[2026-04-14 01:51:03] DEBUG AuthHandler - begin authenticate()
+[2026-04-14 01:51:03] DEBUG AuthHandler - loading user record from db
+[2026-04-14 01:51:03] DEBUG AuthHandler - db connection pool size: 4
+[2026-04-14 01:51:03] DEBUG AuthHandler - acquired connection from pool
+[2026-04-14 01:51:03] DEBUG AuthHandler - executing query
+[2026-04-14 01:51:03] DEBUG AuthHandler - query returned 1 row
+[2026-04-14 01:51:03] DEBUG AuthHandler - comparing password hash
+[2026-04-14 01:51:03] DEBUG AuthHandler - hash mismatch
+[2026-04-14 01:51:03] DEBUG AuthHandler - authenticate() returning False
+[2026-04-14 01:51:03] DEBUG MainThread - handler returned 401
+[2026-04-14 01:51:03] DEBUG MainThread - sending response
+[2026-04-14 01:51:03] DEBUG MainThread - response sent, 47 bytes
+[2026-04-14 01:51:58] DEBUG MainThread - entering handle_request
+[2026-04-14 01:51:58] DEBUG MainThread - request headers parsed
+[2026-04-14 01:51:58] DEBUG MainThread - checking content-type
+[2026-04-14 01:51:58] DEBUG MainThread - routing to auth handler
+[2026-04-14 01:51:58] DEBUG AuthHandler - begin authenticate()
+[2026-04-14 01:51:58] DEBUG AuthHandler - loading user record from db
+[2026-04-14 01:51:58] DEBUG AuthHandler - db connection pool size: 5
+[2026-04-14 01:51:58] DEBUG AuthHandler - acquired connection from pool
+[2026-04-14 01:51:58] DEBUG AuthHandler - executing query
+[2026-04-14 01:51:58] DEBUG AuthHandler - query returned 1 row
+[2026-04-14 01:51:58] DEBUG AuthHandler - comparing password hash
+[2026-04-14 01:51:58] DEBUG AuthHandler - hash mismatch
+[2026-04-14 01:51:58] DEBUG AuthHandler - authenticate() returning False
+[2026-04-14 01:51:58] DEBUG MainThread - handler returned 401
+[2026-04-14 01:51:58] DEBUG MainThread - sending response
+[2026-04-14 01:51:58] DEBUG MainThread - response sent, 47 bytes
+[2026-04-14 01:52:44] DEBUG MainThread - entering handle_request
+[2026-04-14 01:52:44] DEBUG MainThread - request headers parsed
+[2026-04-14 01:52:44] DEBUG MainThread - checking content-type
+[2026-04-14 01:52:44] DEBUG MainThread - routing to auth handler
+[2026-04-14 01:52:44] DEBUG AuthHandler - begin authenticate()
+[2026-04-14 01:52:44] DEBUG AuthHandler - loading user record from db
+[2026-04-14 01:52:44] DEBUG AuthHandler - db connection pool size: 5
+[2026-04-14 01:52:44] DEBUG AuthHandler - acquired connection from pool
+[2026-04-14 01:52:44] DEBUG AuthHandler - executing query
+[2026-04-14 01:52:44] DEBUG AuthHandler - query returned 1 row
+[2026-04-14 01:52:44] DEBUG AuthHandler - comparing password hash
+[2026-04-14 01:52:44] DEBUG AuthHandler - hash mismatch
+[2026-04-14 01:52:44] DEBUG AuthHandler - authenticate() returning False
+[2026-04-14 01:52:44] DEBUG MainThread - handler returned 401
+[2026-04-14 01:52:44] DEBUG MainThread - sending response
+[2026-04-14 01:52:44] DEBUG MainThread - response sent, 47 bytes
+[2026-04-14 01:53:29] DEBUG MainThread - entering handle_request
+[2026-04-14 01:53:29] DEBUG MainThread - request headers parsed
+[2026-04-14 01:53:29] DEBUG MainThread - checking content-type
+[2026-04-14 01:53:29] DEBUG MainThread - routing to auth handler
+[2026-04-14 01:53:29] DEBUG AuthHandler - begin authenticate()
+[2026-04-14 01:53:29] DEBUG AuthHandler - loading user record from db
+[2026-04-14 01:53:29] DEBUG AuthHandler - db connection pool size: 5
+[2026-04-14 01:53:29] DEBUG AuthHandler - acquired connection from pool
+[2026-04-14 01:53:29] DEBUG AuthHandler - executing query
+[2026-04-14 01:53:29] DEBUG AuthHandler - query returned 1 row
+[2026-04-14 01:53:29] DEBUG AuthHandler - comparing password hash
+[2026-04-14 01:53:29] DEBUG AuthHandler - hash mismatch
+[2026-04-14 01:53:29] DEBUG AuthHandler - authenticate() returning False
+[2026-04-14 01:53:29] DEBUG MainThread - handler returned 401
+[2026-04-14 01:53:29] DEBUG MainThread - sending response
+[2026-04-14 01:53:29] DEBUG MainThread - response sent, 47 bytes
+[2026-04-14 01:54:17] DEBUG MainThread - entering handle_request
+[2026-04-14 01:54:17] DEBUG MainThread - request headers parsed
+[2026-04-14 01:54:17] DEBUG MainThread - checking content-type
+[2026-04-14 01:54:17] DEBUG MainThread - routing to auth handler
+[2026-04-14 01:54:17] DEBUG AuthHandler - begin authenticate()
+[2026-04-14 01:54:17] DEBUG AuthHandler - loading user record from db
+[2026-04-14 01:54:17] DEBUG AuthHandler - db connection pool size: 5
+[2026-04-14 01:54:17] DEBUG AuthHandler - acquired connection from pool
+[2026-04-14 01:54:17] DEBUG AuthHandler - executing query
+[2026-04-14 01:54:17] DEBUG AuthHandler - query returned 1 row
+[2026-04-14 01:54:17] DEBUG AuthHandler - comparing password hash
+[2026-04-14 01:54:17] DEBUG AuthHandler - hash mismatch
+[2026-04-14 01:54:17] DEBUG AuthHandler - authenticate() returning False
+[2026-04-14 01:54:17] DEBUG MainThread - handler returned 401
+[2026-04-14 01:54:17] DEBUG MainThread - sending response
+[2026-04-14 01:54:17] DEBUG MainThread - response sent, 47 bytes
+[2026-04-14 01:55:02] DEBUG MainThread - entering handle_request
+[2026-04-14 01:55:02] DEBUG MainThread - request headers parsed
+[2026-04-14 01:55:02] DEBUG MainThread - checking content-type
+[2026-04-14 01:55:02] DEBUG MainThread - routing to auth handler
+[2026-04-14 01:55:02] DEBUG AuthHandler - begin authenticate()
+[2026-04-14 01:55:02] DEBUG AuthHandler - loading user record from db
+[2026-04-14 01:55:02] DEBUG AuthHandler - db connection pool size: 5
+[2026-04-14 01:55:02] DEBUG AuthHandler - acquired connection from pool
+[2026-04-14 01:55:02] DEBUG AuthHandler - executing query
+[2026-04-14 01:55:02] DEBUG AuthHandler - query returned 1 row
+[2026-04-14 01:55:02] DEBUG AuthHandler - comparing password hash
+[2026-04-14 01:55:02] DEBUG AuthHandler - hash mismatch
+[2026-04-14 01:55:02] DEBUG AuthHandler - authenticate() returning False
+[2026-04-14 01:55:02] DEBUG MainThread - handler returned 401
+[2026-04-14 01:55:02] DEBUG MainThread - sending response
+[2026-04-14 01:55:02] DEBUG MainThread - response sent, 47 bytes
+[2026-04-14 01:55:51] DEBUG MainThread - entering handle_request
+[2026-04-14 01:55:51] DEBUG MainThread - request headers parsed
+[2026-04-14 01:55:51] DEBUG MainThread - checking content-type
+[2026-04-14 01:55:51] DEBUG MainThread - routing to auth handler
+[2026-04-14 01:55:51] DEBUG AuthHandler - begin authenticate()
+[2026-04-14 01:55:51] DEBUG AuthHandler - loading user record from db
+[2026-04-14 01:55:51] DEBUG AuthHandler - db connection pool size: 5
+[2026-04-14 01:55:51] DEBUG AuthHandler - acquired connection from pool
+[2026-04-14 01:55:51] DEBUG AuthHandler - executing query
+[2026-04-14 01:55:51] DEBUG AuthHandler - query returned 1 row
+[2026-04-14 01:55:51] DEBUG AuthHandler - comparing password hash
+[2026-04-14 01:55:51] DEBUG AuthHandler - hash mismatch
+[2026-04-14 01:55:51] DEBUG AuthHandler - authenticate() returning False
+[2026-04-14 01:55:51] DEBUG MainThread - handler returned 401
+[2026-04-14 01:55:51] DEBUG MainThread - sending response
+[2026-04-14 01:55:51] DEBUG MainThread - response sent, 47 bytes
+[2026-04-14 01:56:38] DEBUG MainThread - entering handle_request
+[2026-04-14 01:56:38] DEBUG MainThread - request headers parsed
+[2026-04-14 01:56:38] DEBUG MainThread - checking content-type
+[2026-04-14 01:56:38] DEBUG MainThread - routing to auth handler
+[2026-04-14 01:56:38] DEBUG AuthHandler - begin authenticate()
+[2026-04-14 01:56:38] DEBUG AuthHandler - loading user record from db
+[2026-04-14 01:56:38] DEBUG AuthHandler - db connection pool size: 5
+[2026-04-14 01:56:38] DEBUG AuthHandler - acquired connection from pool
+[2026-04-14 01:56:38] DEBUG AuthHandler - executing query
+[2026-04-14 01:56:38] DEBUG AuthHandler - query returned 1 row
+[2026-04-14 01:56:38] DEBUG AuthHandler - comparing password hash
+[2026-04-14 01:56:38] DEBUG AuthHandler - hash mismatch
+[2026-04-14 01:56:38] DEBUG AuthHandler - authenticate() returning False
+[2026-04-14 01:56:38] DEBUG MainThread - handler returned 401
+[2026-04-14 01:56:38] DEBUG MainThread - sending response
+[2026-04-14 01:56:38] DEBUG MainThread - response sent, 47 bytes
+[2026-04-14 02:03:11] DEBUG MainThread - entering handle_request
+[2026-04-14 02:03:11] DEBUG MainThread - request headers parsed
+[2026-04-14 02:03:11] DEBUG MainThread - checking content-type
+[2026-04-14 02:03:11] DEBUG MainThread - routing to auth handler
+[2026-04-14 02:03:11] DEBUG AuthHandler - begin authenticate()
+[2026-04-14 02:03:11] DEBUG AuthHandler - loading user record from db
+[2026-04-14 02:03:11] DEBUG AuthHandler - db connection pool size: 5
+[2026-04-14 02:03:11] DEBUG AuthHandler - acquired connection from pool
+[2026-04-14 02:03:11] DEBUG AuthHandler - executing query
+[2026-04-14 02:03:11] DEBUG AuthHandler - query returned 1 row
+[2026-04-14 02:03:11] DEBUG AuthHandler - comparing password hash
+[2026-04-14 02:03:11] DEBUG AuthHandler - hash match
+[2026-04-14 02:03:11] DEBUG AuthHandler - authenticate() returning True
+[2026-04-14 02:03:11] DEBUG TokenHandler - generating token
+[2026-04-14 02:03:11] DEBUG TokenHandler - signing token
+[2026-04-14 02:03:11] DEBUG TokenHandler - token generated
+[2026-04-14 02:03:11] DEBUG MainThread - handler returned 200
+[2026-04-14 02:03:11] DEBUG MainThread - sending response
+[2026-04-14 02:03:11] DEBUG MainThread - response sent, 892 bytes
+[2026-04-14 02:05:04] DEBUG MainThread - entering handle_request
+[2026-04-14 02:05:04] DEBUG MainThread - request headers parsed
+[2026-04-14 02:05:04] DEBUG MainThread - validating token
+[2026-04-14 02:05:04] DEBUG MainThread - token valid
+[2026-04-14 02:05:04] DEBUG MainThread - routing to missions handler
+[2026-04-14 02:05:04] DEBUG MissionsHandler - begin list_missions()
+[2026-04-14 02:05:04] DEBUG MissionsHandler - building query
+[2026-04-14 02:05:04] DEBUG MissionsHandler - executing scan
+[2026-04-14 02:05:04] DEBUG MissionsHandler - scan complete
+[2026-04-14 02:05:04] DEBUG MissionsHandler - serialising 847 records
+[2026-04-14 02:05:04] DEBUG MainThread - handler returned 200
+[2026-04-14 02:05:04] DEBUG MainThread - sending response
+[2026-04-14 02:05:04] DEBUG MainThread - response sent, 284109 bytes
+[2026-04-14 02:14:02] DEBUG MainThread - entering handle_request
+[2026-04-14 02:14:02] DEBUG MainThread - request headers parsed
+[2026-04-14 02:14:02] DEBUG MainThread - validating token
+[2026-04-14 02:14:02] DEBUG MainThread - token valid
+[2026-04-14 02:14:02] DEBUG MainThread - routing to missions handler
+[2026-04-14 02:14:02] DEBUG MissionsHandler - begin create_mission()
+[2026-04-14 02:14:02] DEBUG MissionsHandler - checking permissions
+[2026-04-14 02:14:02] DEBUG MissionsHandler - permission check failed
+[2026-04-14 02:14:02] DEBUG MainThread - handler returned 403
+[2026-04-14 02:14:02] DEBUG MainThread - sending response
+[2026-04-14 02:14:02] DEBUG MainThread - response sent, 47 bytes
+[2026-04-14 02:15:48] DEBUG MainThread - entering handle_request
+[2026-04-14 02:15:48] DEBUG MainThread - request headers parsed
+[2026-04-14 02:15:48] DEBUG MainThread - validating token
+[2026-04-14 02:15:48] DEBUG MainThread - token valid
+[2026-04-14 02:15:48] DEBUG MainThread - routing to missions handler
+[2026-04-14 02:15:48] DEBUG MissionsHandler - begin list_missions()
+[2026-04-14 02:15:48] DEBUG MissionsHandler - building query
+[2026-04-14 02:15:48] DEBUG MissionsHandler - executing scan
+[2026-04-14 02:15:48] DEBUG MissionsHandler - scan complete
+[2026-04-14 02:15:48] DEBUG MissionsHandler - serialising 847 records
+[2026-04-14 02:15:48] DEBUG MainThread - handler returned 200
+[2026-04-14 02:15:48] DEBUG MainThread - sending response
+[2026-04-14 02:15:48] DEBUG MainThread - response sent, 284109 bytes

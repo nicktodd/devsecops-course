@@ -1,0 +1,30 @@
+[2026-04-14 01:47] AUTH - login failed
+[2026-04-14 01:47] AUTH - login failed
+[2026-04-14 01:48] AUTH - login failed
+[2026-04-14 01:48] DEBUG - processing request
+[2026-04-14 01:49] AUTH - login failed
+[2026-04-14 01:50] AUTH - login failed
+[2026-04-14 01:51] DEBUG - db connection ok
+[2026-04-14 01:51] AUTH - login failed
+[2026-04-14 01:52] AUTH - login failed
+[2026-04-14 01:53] AUTH - login failed
+[2026-04-14 01:54] AUTH - login failed
+[2026-04-14 01:55] INFO - request received
+[2026-04-14 01:55] AUTH - login failed
+[2026-04-14 01:56] AUTH - login failed
+[2026-04-14 01:57] AUTH - login failed
+[2026-04-14 01:57] DEBUG - processing request
+[2026-04-14 02:03] AUTH - login ok
+[2026-04-14 02:03] INFO - token created
+[2026-04-14 02:04] DEBUG - processing request
+[2026-04-14 02:05] INFO - request received GET /missions
+[2026-04-14 02:05] DEBUG - db query ok, returned records
+[2026-04-14 02:08] INFO - request received GET /satellites
+[2026-04-14 02:08] DEBUG - db query ok, returned records
+[2026-04-14 02:11] INFO - request received GET /launches
+[2026-04-14 02:11] DEBUG - db query ok, returned records
+[2026-04-14 02:14] WARN - access denied
+[2026-04-14 02:14] DEBUG - processing request
+[2026-04-14 02:15] INFO - request received GET /missions
+[2026-04-14 02:15] DEBUG - db query ok, returned records
+[2026-04-14 02:17] DEBUG - response sent
