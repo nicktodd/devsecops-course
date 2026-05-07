@@ -1,10 +1,49 @@
-# Student Machine Prerequisites
-
-This document lists everything you need installed and configured before attending the course. Not every prerequisite is needed for every module — the tables below indicate which demos/labs each item supports.
+# Course Prerequisites
 
 ---
 
-## 1. Programming Languages & Runtimes
+## Part 1 — Prerequisites to Complete the Labs
+
+The lab exercises are discussion, analysis, and written-deliverable tasks. The tooling requirements are minimal.
+
+### What you need
+
+| Requirement | Notes |
+|---|---|
+| **VS Code** (any recent stable version) | Used in Lab 06 to author and preview Mermaid diagrams |
+| **Markdown Preview Mermaid Support** VS Code extension | Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=bierner.markdown-mermaid); needed to render architecture diagrams in Lab 06 |
+| **Git** | To clone the course repository and commit your lab answers |
+| **Course repository cloned locally** | All log files, source files, and documentation referenced in labs must be accessible on your machine |
+| **Terminal** (`bash`, `zsh`, or PowerShell) | Lab 07 uses `grep` (Linux/macOS) or `Select-String` (PowerShell) to query log files |
+| **Web browser** | Lab 08 uses a public read-only SonarCloud dashboard — no account or login required |
+
+### Lab-by-Lab Summary
+
+| Lab | What you do | Tools needed |
+|---|---|---|
+| **Lab 04** — Secrets & Identity | Group discussion exercise | None |
+| **Lab 05** — Cloud & Kubernetes Security | Group scenario analysis | None |
+| **Lab 06** — STRIDE Threat Modelling | Write a threat model using Mermaid diagrams | VS Code, Mermaid extension, Git |
+| **Lab 07** — Detection Engineering | Analyse structured log files, write detection rules | Terminal (`grep` / PowerShell), Git |
+| **Lab 08** — Vulnerability Scanning / SAST | Review a live SonarCloud scan and source files | Web browser, local repo clone |
+| **Lab 09** — Incident Response | Tabletop CI/CD supply chain scenario, written answers | Text editor, Git |
+
+### Lab Prerequisites Checklist
+
+- [ ] VS Code installed
+- [ ] Markdown Preview Mermaid Support extension installed in VS Code
+- [ ] Git installed (`git --version`)
+- [ ] Course repository cloned to your machine
+- [ ] Terminal available with `grep` (Linux/macOS) or PowerShell (Windows)
+- [ ] Web browser (for Lab 08)
+
+---
+
+## Part 2 — Prerequisites to Run the Demos
+
+> **Note for students:** You do not need to run the demos yourself. The instructor will run these live. This section is provided for reference — for example if you want to recreate a demo in your own environment after the course.
+
+### Programming Languages & Runtimes
 
 | Tool | Version | Used In |
 |---|---|---|
@@ -14,9 +53,7 @@ This document lists everything you need installed and configured before attendin
 
 > **Windows users:** install GCC/Clang via [WSL 2](https://learn.microsoft.com/en-us/windows/wsl/) or [MSYS2](https://www.msys2.org/).
 
----
-
-## 2. Build Tools
+### Build Tools
 
 | Tool | Version | Used In |
 |---|---|---|
@@ -24,23 +61,18 @@ This document lists everything you need installed and configured before attendin
 | pip | Latest | All Python demos |
 | make | Any | C memory-safety demo |
 
----
-
-## 3. Docker
+### Docker
 
 | Tool | Notes |
 |---|---|
 | Docker Engine | Must have access to the Docker socket |
 | Docker Compose v2 | Bundled with Docker Desktop; verify with `docker compose version` |
 
-Docker is used for the container image scanning demo (Clair), the Bitbucket pipeline, and several OWASP demos. **At least 8 GB RAM** is recommended for the machine so that Clair + PostgreSQL can run comfortably alongside other containers.
+At least **8 GB RAM** is recommended so that Clair + PostgreSQL can run alongside other containers.
 
----
+### AWS
 
-## 4. AWS
-
-### AWS Account
-You need an active AWS account with permissions to create and manage:
+An active AWS account with permissions to create and manage:
 
 | Service |
 |---|
@@ -52,134 +84,46 @@ You need an active AWS account with permissions to create and manage:
 | API Gateway (Regional) |
 | Cognito User Pools |
 | DynamoDB |
-| CloudWatch Logs |
-| X-Ray |
+| CloudWatch Logs / X-Ray |
 | CodeBuild / CodePipeline |
 | CodeStar Connections (to GitHub) |
 | SSM Parameter Store |
 | EC2 / VPC / Security Groups |
 
-> The default deployment region used in demos is **eu-west-1**. You can change this, but make sure your account has the services available in your chosen region.
+Default deployment region used in demos: **eu-west-1**.
 
-### AWS CLI
-Install and configure the AWS CLI with credentials for your account:
+**AWS CLI** — install and configure with `aws configure`
 
-```bash
-aws configure
-```
+**AWS SAM CLI** — `pip install aws-sam-cli`
 
-### AWS SAM CLI
-Required for the STRIDE serverless demo:
-
-```bash
-pip install aws-sam-cli
-```
-
----
-
-## 5. Python Packages (global or per-venv)
-
-Install these globally or in a virtual environment before the course:
+### Python Security Packages
 
 ```bash
 pip install bandit pip-audit safety pip-tools
 ```
 
-| Package | Purpose |
+### CI/CD Platform Accounts
+
+| Platform | Requirement |
 |---|---|
-| `bandit` | Python static analysis (SAST) |
-| `pip-audit` | Python dependency CVE scanning |
-| `safety` | Python dependency scanning |
-| `pip-tools` | Dependency pinning and lock files |
+| **Bitbucket** | Free account + repository (container image scan pipeline) |
+| **GitHub** | Free account (CodeBuild/CodePipeline via CodeStar Connections) |
+| **Jenkins** | Local install or Docker image (OWASP A06 & A08 Jenkinsfile demos) |
 
-Demo-specific packages (`flask`, `pyjwt`, `requests`, etc.) are installed per-demo as part of the exercise instructions.
+### External API Keys
 
----
-
-## 6. Security Scanning Tools
-
-| Tool | Install | Purpose |
+| Service | Registration | Used In |
 |---|---|---|
-| Bandit | `pip install bandit` | Python SAST |
-| pip-audit | `pip install pip-audit` | Python dependency CVE scanning |
-| safety | `pip install safety` | Python dependency scanning |
-| clairctl v4.7.3 | Auto-downloaded by `demos/dockerimages/scan.sh` | CLI for submitting images to Clair |
+| **NVD API key** (free) | [nvd.nist.gov/developers/request-an-api-key](https://nvd.nist.gov/developers/request-an-api-key) | OWASP A06 Jenkins Dependency-Check plugin |
 
----
+### Command-Line Utilities
 
-## 7. CI/CD Platforms & Accounts
+`curl`, `grep`, `sha256sum` (or `certutil -hashfile` on Windows), `javac` / `java`, `bash` / `zsh`
 
-| Platform | Requirement | Used In |
-|---|---|---|
-| **Bitbucket** | Free account + a repository | Docker image scan pipeline lab |
-| **GitHub** | Free account | CodeBuild/CodePipeline via CodeStar Connections (STRIDE lab) |
-| **Jenkins** | Local install or Docker image | OWASP A06 & A08 Jenkinsfile demos |
-
-> Jenkins is only needed if you want to run the Jenkinsfile demos locally. A Docker-based Jenkins instance is sufficient.
-
----
-
-## 8. External API Keys & Registrations
-
-| Service | How to Register | Used In |
-|---|---|---|
-| **NVD API key** (free) | [https://nvd.nist.gov/developers/request-an-api-key](https://nvd.nist.gov/developers/request-an-api-key) | OWASP A06 Jenkins OWASP Dependency-Check plugin |
-
-> Without an NVD API key the Dependency-Check plugin falls back to unauthenticated requests, which are heavily rate-limited and can cause the demo to time out.
-
----
-
-## 9. VS Code
-
-Install [Visual Studio Code](https://code.visualstudio.com/) (any recent stable version).
-
-### Required Extensions
-
-| Extension | Purpose |
-|---|---|
-| [Markdown Preview Mermaid Support](https://marketplace.visualstudio.com/items?itemName=bierner.markdown-mermaid) | Render Mermaid diagrams in the STRIDE threat-modelling lab |
-
----
-
-## 10. Command-Line Utilities
-
-These standard tools must be available in your terminal:
-
-| Tool | Notes |
-|---|---|
-| `bash` (or `zsh`) | All shell scripts; Windows users should use WSL 2 |
-| `curl` | Image scanning scripts, OWASP demo API calls |
-| `grep` | Detection Engineering lab (Windows alternative: PowerShell `Select-String`) |
-| `sha256sum` | OWASP A08 integrity demo (Windows: `certutil -hashfile`) |
-| `javac` / `java` | Java demo compilation |
-| `git` | Cloning and working with the course repository |
-
----
-
-## 11. Disk & Memory
+### Disk & Memory
 
 | Requirement | Detail |
 |---|---|
-| **≥8 GB RAM** | Required to run Docker containers for Clair + PostgreSQL alongside normal workloads |
-| **≥5 GB free disk** | NVD CVE database (~300 MB on first run), Docker images, Maven/pip caches |
+| **≥8 GB RAM** | Docker containers (Clair + PostgreSQL) |
+| **≥5 GB free disk** | NVD CVE database, Docker images, Maven/pip caches |
 | **Internet access** | Maven Central, PyPI, Docker Hub, Quay.io, GitHub releases, NVD |
-
----
-
-## Quick-Start Checklist
-
-Use this list on the day:
-
-- [ ] Python 3.11 or 3.12 installed (`python --version`)
-- [ ] Java JDK 17+ installed (`java -version`)
-- [ ] Apache Maven 3.6+ installed (`mvn -version`)
-- [ ] GCC or Clang installed (`gcc --version` / `clang --version`)
-- [ ] Docker Engine + Compose v2 running (`docker compose version`)
-- [ ] AWS CLI installed and configured (`aws sts get-caller-identity`)
-- [ ] AWS SAM CLI installed (`sam --version`)
-- [ ] Bandit, pip-audit, safety, pip-tools installed (`bandit --version`)
-- [ ] VS Code installed with Markdown Preview Mermaid Support extension
-- [ ] Bitbucket account created
-- [ ] GitHub account created
-- [ ] NVD API key obtained
-- [ ] Git installed (`git --version`)
